@@ -49,6 +49,7 @@ def get_price_SN(group_id, item_id):
 def get_price_TB(group_id, item_id):
     # chrome_drive = r"D:\Anaconda3\chromedriver.exe"
     # browser = webdriver.Chrome(executable_path=chrome_drive)
+    # 配置浏览器
     browser = webdriver.Firefox()
     browser.get('https://detail.tmall.com/item.htm?id=' + group_id + '&skuId=' + item_id)
     browser.implicitly_wait(20)

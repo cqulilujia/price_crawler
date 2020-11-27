@@ -26,14 +26,15 @@ def get_price():
         price_dic['苏宁'][item[0]] = get_price_SN(group_id=item[1], item_id=item[2])
     for item in item_lx:
         price_dic['联想'][item[0]] = get_price_LX(item[1])
-    for item in item_tb:
-        price_dic['淘宝'][item[0]] = get_price_TB(group_id=item[1], item_id=item[2])
+
+    # 淘宝部分需要配置
+    # for item in item_tb:
+    #     price_dic['淘宝'][item[0]] = get_price_TB(group_id=item[1], item_id=item[2])
 
     return price_dic
 
 
 def process_meessage(price_dic):
-    print(price_dic)
     message = ''
     for key, value in price_dic.items():        # key代表平台名字，value代表多个店铺的价格汇总
         message = message + key + '\n'
@@ -42,31 +43,40 @@ def process_meessage(price_dic):
     return message[:-1]
 
 
-def sava_data(price_dic):
+def get_min_price(price_dic):
+    min_price = 1000000
+    for key, value in price_dic.items():        # key代表平台名字，value代表多个店铺的价格汇总
+        for key_p, value_p in value.items():    # key代表店铺名字，value代表每个店铺的价格
+            min_price = min(min_price, value_p)
+    return min_price
+
+
+def sava_data(price_dic):   # 待更新，保存数据函数
     return
 
 
 def main():
     ding = DingTalk_Disaster()
-    flag = False  # 用于控制在8点只发送第一次消息
     while True:
         hour = time.strftime('%H', time.localtime(time.time()))
         price = get_price()
+        message = process_meessage(price)
         sava_data(price)
 
-        # 供测试
-        message = process_meessage(price)
+        # 供第一次执行时的测试
         ding.send_msg(message)
 
+        # 每天早上八点
         if hour == '23':
             ding.send_msg('晚安，Lucas')
-        if hour == '08':
-            if not flag:
-                flag = True
-                message = process_meessage(price)
-                ding.send_msg(message)
-        else:
-            flag = False
+        if hour == '08':                        # 每天早上8点发送一次价格消息
+            price = get_price()
+            message = process_meessage(price)
+            ding.send_msg(message)
+
+        min_price = get_min_price(price)
+        if min_price <= PRICE:              # 价格小于设定价格时发送消息
+            ding.send_msg(message)
 
         interval = FREQUENCY * (random() % 7 + 57)  # 平均FREQUENCY分钟一次
         sleep(interval)
@@ -74,5 +84,4 @@ def main():
 
 if __name__ == '__main__':
     ding = DingTalk_Disaster()
-    # ding.send_msg('早上好，Lucas.')
     main()
